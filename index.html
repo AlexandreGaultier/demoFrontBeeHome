@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
+    <link rel="stylesheet" href="styles/index.css">
+    <title>Bee Home</title>
+</head>
+<body>
+  <div id="demo">
+    <div class="header">
+      <div class="header-right">
+        <a href="">
+          <i class="uil uil-user-circle icon_profil"></i>
+        </a>
+      </div>
+    </div>
+    
+    <div class="container">
+      <p class="pre_title">Votre ruche,</p>
+      <h1 class="title">Honey Fan</h1>
+      <div class="box weather" v-if="meteo.weather !== undefined">
+        
+        <div id="test" style="margin:0">
+          <img v-if="meteo.weather[0].main === 'Clear'" class="sun" src="./assets/img/sun.png" alt="">
+          <img v-else-if="meteo.weather[0].main === 'Clouds'" class="clouds" src="./assets/img/clouds.png" alt="">
+          <img v-else="meteo.weather[0].main === 'Rain'" class="rain" src="./assets/img/rain.png" alt="">
+          <div id="temp">
+            <p id="degre">{{meteo.main.temp}}°C</p>
+            <br>
+            <p id="meteo">{{meteo.weather[0].main}}</p>
+          </div>
+        </div>
+        <p style="margin:3vw 0 1vw 2vw;font-size: 8vw;color: #545454;font-weight: 500; font-size: 5vw">Aujourd'hui</p>
+      </div>
+
+      <div class="box health">
+        <img class="ruche_img" src="./assets/img/ruche.png" alt="">
+
+        <div class="data">
+          <p id="degre">{{lastTemperature.temperature}}°C</p>
+
+          <div class="humidity">
+            <img class="drop" src="./assets/img/drop.png" alt="">
+            <p id="humidity">{{lastHumidite.humidite}} %</p>
+          </div>
+          <p id="text">Température / Humidité</p>
+        </div>
+      </div>
+        
+      <div class="bottom">
+        <div class="box population">
+          <img class="bee_img" src="./assets/img/bee.png" alt="">
+          <p id="pop_number">{{lastPopulation.population}}</p>
+          <p id="pop_text">Population<br>actuelle</p>
+        </div>
+  
+        <div class="box production">
+          <img class="honey_img" src="./assets/img/honey.png" alt="">
+          <div style="display:flex;flex-direction:row">
+            <p id="production_number"> {{lastProduction.production}} </p>
+            <p style="font-size: 8vw;color: #545454;font-weight: 500; font-size: 5vw;">Kg</p>
+          </div>
+          <p id="production_text">Production</p>
+        </div>
+      </div>
+
+      <div class="honey_product">
+        <p>Ajouter une production :</p>
+        <input type="text" v-model="productionKg">
+        <button @click="addProduction()">ADD</button>
+      </div>
+
+      <button id="bouton-sticky">
+        <span class="text">
+          <i class="uil uil-graph-bar icon_graph"></i>
+        </span>
+      </button> 
+
+    </div>
+  </div>   
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="./moment.js"></script>
+<script>
+   var demo = new Vue({
+      el: '#demo',
+      data: {
+        meteo:{},
+        lastTemperature: {},
+        lastHumidite: {},
+        lastPopulation: {},
+        lastProduction: {},
+        productionKg:''
+      },
+      created () {
+          this.fetchData()
+        },
+        methods: {
+          fetchData() {
+            var requestOptions = {
+            method: 'GET',
+            redirect: 'follow'
+            };
+            
+            //API LAST TEMPERATURE
+            fetch("http://localhost:3000/lastTemperature", requestOptions)
+              .then(response => response.json())
+              .then(result => {
+                  this.lastTemperature = result
+              })
+              .catch(error => console.log('error', error));
+            
+            //API LAST HUMIDITE
+            fetch("http://localhost:3001/lastHumidite", requestOptions)
+              .then(response => response.json())
+              .then(result => {
+                  this.lastHumidite = result
+              })
+              .catch(error => console.log('error', error));
+
+            //API LAST POPULATION
+            fetch("http://localhost:3002/lastPopulation", requestOptions)
+              .then(response => response.json())
+              .then(result => {
+                  this.lastPopulation = result
+              })
+              .catch(error => console.log('error', error));
+
+            //API LAST POPULATION
+            fetch("http://localhost:3004/lastProduction", requestOptions)
+              .then(response => response.json())
+              .then(result => {
+                  this.lastProduction = result
+              })
+              .catch(error => console.log('error', error));
+
+            // APPEL API OPEN WEATHER MAPS
+            fetch("https://api.openweathermap.org/data/2.5/weather?q=Nantes&appid=4d344860a813f0165f921f589cb7285d&units=metric&lang=fr", requestOptions)
+                .then(response => response.json())
+                .then(result => {
+                    this.meteo = result
+                })
+                .catch(error => console.log('error', error));
+          },
+          addProduction(){
+                var myHeaders = new Headers();
+                myHeaders.append("Content-Type", "application/json");
+                var date = new Date()
+                var raw = JSON.stringify({
+                    "date": moment(date).format('YYYY-MM-DD HH:mm:ss'),
+                    "production": this.productionKg
+                    });
+
+                var requestPOSTOptions = {
+                method: 'POST',
+                headers: myHeaders,
+                body: raw,
+                redirect: 'follow'
+                };
+
+                fetch("http://localhost:3004/addProduction", requestPOSTOptions)
+                  .then((response)=> response.json())
+                    .then((result)=> {
+                        console.log(result)
+                        this.lastProduction = result
+                    })
+                    .catch(error => console.log('error', error));
+            },
+        }
+    })
+</script>
+</html>

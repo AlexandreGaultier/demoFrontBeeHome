@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="styles/index.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+  <title>Bee Home</title>
+</head>
+<body>
+  <canvas id="temperaturesOnMonth" style="width:100%;max-width:600px"></canvas>
+  <div id="demo">
+    {{temperaturesByMonth}}
+    {{datesOnMonth}}
+    {{temperaturesByWeek}}
+    {{datesOnWeek}}
+  </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+   var demo = new Vue({
+      el: '#demo',
+      data: {
+        temperaturesByMonth: [],
+        datesOnMonth:[],
+        temperaturesByWeek: [],
+        datesOnWeek:[],
+      },
+      created () {
+          this.fetchData()
+          new Chart("temperaturesOnMonth", {
+                type: "line",
+                data: {
+                  labels: this.temperaturesByMonth,
+                  datasets: [{
+                    fill: true,
+                    lineTension: 0,
+                    backgroundColor: "rgba(0,0,255,1.0)",
+                    borderColor: "rgba(0,0,255,0.1)",
+                    data: this.datesOnMonth
+                  }]
+                },
+                options: {
+                  legend: {display: true}
+                }
+              })
+      },
+      methods: {
+        fetchData() {
+          var requestOptions = {
+          method: 'GET',
+          redirect: 'follow'
+          };
+          
+          //API LAST TEMPERATURE
+          fetch("http://localhost:3000/temperaturesByMonth", requestOptions)
+            .then(response => response.json())
+            .then(result => {
+                this.temperaturesByMonth= result.map((el)=> el.temperature)
+                this.datesOnMonth = result.map((el)=>el.date)
+            })
+            .catch(error => console.log('error', error));
+          
+          //API LAST HUMIDITE
+          fetch("http://localhost:3000/temperaturesByWeek", requestOptions)
+            .then(response => response.json())
+            .then(result => {
+              this.temperaturesByWeek = result.map((el)=>el.temperature)
+              this.datesOnWeek = result.map((el)=>el.date)
+            })
+            .catch(error => console.log('error', error));
+        },
+      }
+    })
+
+</script>
+</html>
